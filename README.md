@@ -1,12 +1,3 @@
-LogViz
-===================
-
-View the geolocation, status code, operating system and full request of IP addresses visiting your web server using tooltips on an SVG map
-
-- Uses Flask and docker to build the file upload and geolocation services 
-
-- Process multiple Nginx Log files with python and the Geoip Maxmind Database to Geolocate the IPs and generate the map
-
 ![](logviz.gif)
 
 Originally forked from: 
