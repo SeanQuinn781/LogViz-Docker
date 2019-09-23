@@ -29,10 +29,6 @@ https://github.com/blueimp/jQuery-File-Upload
 docker-compose up --build
 ```
 
-docker compose will build two flask apps for the api and data services on ports 3000 and 5000 
-
-Browse to 0.0.0.0:3000 to upload log files to the api service, which will call the data service when the 'CREATE MAP' button is clicked.
-
 2. Using docker without compose
 
 ```
