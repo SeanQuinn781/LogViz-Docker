@@ -1,0 +1,8 @@
+src of scripts for offline testing
+
+https://d3js.org/topojson.v1.min.js -o topojson.v1.min.js
+
+https://cdn.jsdelivr.net/npm/lodash@4.17.11/lodash.min.js -o lodash.min.js
+
+https://d3js.org/d3.v5.min.js -o d3.v5.min.js
+

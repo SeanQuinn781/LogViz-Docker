@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+  
+  upload_service:
+    build: ./upload_service
+    volumes:
+      - './upload_service/app:/upload_service/app'
+    ports:
+      - 3000:80
+    
+  map_service:
+    build: ./map_service
+    volumes:
+      - './upload_service/app:/upload_service/app'
+    ports:
+      - 5000:80

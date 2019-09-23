@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title> Log Viz</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <link href="https://fonts.googleapis.com/css?family=Exo&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Orbitron&display=swap" rel="stylesheet"> 
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+</head>
+<body>
+<div class="container">
+    <div id="map-navigation"></div>
+</div>
+<link rel="stylesheet" href="static/mapCss/style.css">
+
+
+<script type="module">
+
+
+import {
+  createToolTip,
+  positionTooltip
+} from './static/createToolTip.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  startApp()
+  $('.map-nav-btn:nth-child(1)').addClass('active');
+  // rm remaining tooltips when loading a new map/log file
+  $('.tooltip').detach()
+}, false);
+
+function startApp() {
+  class App {
+    constructor(div, logNum) {
+      this.div = div
+      this.logNum = logNum
+    }
+
+    async fetchData({
+      logNum
+    } = this) {
+      let selectedLocation, selectedInfo;
+      this.worldData = topojson.feature(worldData, worldData.objects.countries)
+      // loading initial response extracting raster
+      // js file that loads the information and raster from locations.json into page
+      this.raster = LOCATIONS[logNum]["raster"];
+      this.rasterInfo = LOCATIONS[logNum]["information"];
+      // deriving some constants from the info
+      this.dx = this.rasterInfo["dx"]
+      this.dy = this.rasterInfo["dy"]
+      this.raster = this.raster.map((e, index) => {
+        let [xy, visits, status, ip, os, fullLogLine] = e;
+        return ([
+          [
+            // x coordinate - int
+            xy[0] + d3.randomUniform(-this.dx, this.dx)() / 2,
+            // y coordinate - int
+            xy[1] + d3.randomUniform(-this.dy, this.dy)() / 2
+          ],
+          visits,
+          status,
+          ip,
+          os,
+          fullLogLine,
+          // use data point's index and IP to set a unique ID
+          e[5] = index + '-ip-' + parseInt(e[3])
+        ])
+      })
+    }
+
+    async initiateEnvironment() {
+      await this.fetchData()
+      this.graticule = d3.geoGraticule()
+        .step([10, 10]);
+    }
+
+    setDimensions() {
+      // dims for graph
+      this.boundingRect = this.div.getBoundingClientRect();
+      this.height = this.boundingRect.height;
+      this.width = this.boundingRect.width;
+      // derived quantities
+      this.center = [this.width / 2, this.height / 2]
+      this.dim = [this.width, this.height]
+    }
+
+    createGraph() {
+      // defining projection
+      this.projection = d3.geoNaturalEarth1().scale(1).rotate(90)
+        .fitSize([d3.max(this.dim), d3.min(this.dim)], this.worldData)
+      // defining geoPath generator
+      this.geoPath = d3.geoPath().projection(this.projection)
+      // defining scales, most number of visits of a square
+      this.maxVisit = d3.max(this.raster.map((e) => {
+        return e[1]
+      }))
+      this.radiusFromVisits = d3.scalePow()
+        .domain([0, this.maxVisit])
+        .range([0, 2]).exponent(0.2)
+      this.opacityFromVisits = d3.scalePow()
+        .domain([0, this.maxVisit])
+        .range([0, 1]).exponent(0.2)
+      // creating circle path constructor
+      this.circle = d3.geoCircle()
+        .radius((d) => {
+          return this.radiusFromVisits(d[1])
+        })
+        .center((d) => {
+          return d[0]
+        })
+      // 2. Plot data
+      this.svg = d3.select(this.div).append("svg")
+        .attr("height", d3.min(this.dim))
+        .attr("width", d3.max(this.dim))
+      // if height bigger then width, rotate sideways
+      if (this.height > this.width) {
+        this.svg
+          .attr("transform", "translate(" + (this.width - this.height) / 2 + ", " + (this.height - this.width) / 2 + ") rotate(90)")
+      }
+      // plot graticules
+      this.svg.append("path")
+        .attr("class", "graticule")
+        .datum(this.graticule)
+        .attr("d", this.geoPath)
+        .style("fill", "none")
+        .style("stroke", "#ccc");
+      // plot globe
+      this.svg.selectAll(".segment")
+        .data(this.worldData.features)
+        .enter().append("path")
+        .attr("class", "segment")
+        .attr("d", this.geoPath)
+        .style("stroke-width", "1px")
+        .style("opacity", ".6");
+      // plot raster data
+      this.svg.selectAll("circle")
+        .data(this.raster)
+        .enter().append("path")
+        .attr("class", "marker")
+        .attr("d", (d) => {
+          return this.geoPath(this.circle(d))
+        })
+        .attr("class", (d) => {
+          // get first digit of status code (simple way to color code requests on frontend)
+          return 'request-' + d[2].slice(0, 1)
+        })
+        .attr("opacity", (d) => {
+          return this.opacityFromVisits(d[1])
+        })
+        .attr("id", (d) => {
+          return 'data-point-' + d[6]
+        })
+        // Tooltips
+        .on("mouseover", (data) => {
+          let tooltip = document.createElement('div');
+          createToolTip(tooltip, data)
+          container.append(tooltip);
+          let dataPointId = 'data-point-' + data[6],
+            svgSelectParent = d3.select("#" + dataPointId);
+
+          positionTooltip(svgSelectParent, tooltip);
+        }).on("mouseout", (e) => {
+          let tooltips = $('.container').find('.tooltip'),
+            index,
+            previousToolTip;
+
+          for (index = 0; index < tooltips.length; index++) {
+            previousToolTip = tooltips[index - 1];
+            $(previousToolTip).fadeOut();
+          }
+        });
+    }
+
+    handleResize() {
+      this.setDimensions()
+      this.svg.remove()
+      // draw new
+      this.createGraph()
+    }
+
+    addEvents() {
+      this.handleResize = this.handleResize.bind(this)
+      // debounced resize handler
+      window.addEventListener("resize", _.debounce(this.handleResize, 100))
+    }
+
+    async run() {
+      await this.initiateEnvironment()
+      this.setDimensions()
+      this.createGraph()
+      this.addEvents()
+    }
+  }
+
+  let container = document.querySelector("div.container"),
+    mapNav = container.querySelector('#map-navigation'),
+    // display the first log file in the list by default
+    app = new App(container, 0),
+    index,
+    btn;
+  // btn and listener for each log file button
+  // when clicked it will display the map
+  // for each log
+  for (index = 0; index < LOGLIST.length; index++) {
+
+    btn = document.createElement('button')
+    btn.innerHTML = LOGLIST[index]
+    btn.setAttribute('data-index', index)
+    btn.className = 'map-nav-btn'
+
+    btn.onclick = (e) => {
+      const previousMap = container.getElementsByTagName('svg')[0];
+      // get the log number from the log number button
+      const logNumSelected = parseInt(e.currentTarget.getAttribute('data-index'));
+      // remove last active button
+      $('.map-nav-btn').removeClass('active');
+      $(e.currentTarget).addClass('active map-nav-btn');
+      $(previousMap).detach();
+      app = new App(container, logNumSelected);
+      app.run();
+      return false;
+    };
+    mapNav.appendChild(btn);
+  }
+  app.run()
+}
+</script>
+
+<fieldset id="colorCodes" width="50px">
+    400 status code
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="50" fill="#f00"/>
+    </svg>
+    <hr>
+    300 status code
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="50" fill="rgba(255,240,1)"/>
+    </svg>
+    <hr>
+    200 status code
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="50" fill="rgb(60, 255, 0)"/>
+    </svg>
+    <hr>
+</fieldset>
+<h4 id="clue">Hover over each data point for more information</h4>
+  <div class="logoWrap">
+    <img class="logVizLogo" src="static/img/logvizv3.png">
+    <h3 class="pl-2">LogViz</h3>
+  </div>
+  <script src="static/localScripts/d3.v5.min.js"></script>
+  <script src="static/localScripts/lodash.min.js"></script>
+  <script src="static/localScripts/topojson.v1.min.js"></script>
+  <script src="static/localScripts/jquery-3.4.1.min.js"></script>
+  <script src="static/mapAssets/locations.js"></script>
+  <script src="static/mapAssets/loglist.js"></script>
+  <script src="static/localScripts/worlddata.js"></script>
+</body>
+</html>
