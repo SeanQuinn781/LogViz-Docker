@@ -56,13 +56,7 @@ docker run -p 5000:80 -t map_service
 
 2. Upload the log files to your browser at 0.0.0.0:3000. For multiple maps you can upload multiple log files at a time
 
-3. Click 'GENERATE MAP' and LogViz will:
-
-Parse the log files and geolocate IPs
-
-Create the Javascript file and raster data used to generate the SVG map
-
-Plot IPs on the SVG map
+3. Click 'GENERATE MAP'
 
 4. After the map is generated hover over each datapoint (IP) to find the OS, request type and full request that originated from that IP.
 
