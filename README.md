@@ -1,4 +1,4 @@
-LogViz
+(logviz-logo.png)
 ===================
 
 View the geolocation, status code, operating system and full request of IP addresses visiting your web server using tooltips on an SVG map
