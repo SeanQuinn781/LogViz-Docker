@@ -33,17 +33,15 @@ https://github.com/blueimp/jQuery-File-Upload
 docker-compose up
 ```
 
-## Usage
+#USAGE
+==========================
 
-1. Download the Nginx access.log Files from your web server and unzip the files or use the testing log files included in access-logs
+1. Upload Log Files: Use the testing logs found in the test-logs directory, or Download Nginx access Log Files from your web server and unzip the files.
 
-2. Upload the log files to your browser at 0.0.0.0:3000. For multiple maps you can upload multiple log files at a time
+2. Upload multiple nginx log files to uploader at http://127.0.0.1:5000
 
-3. Click 'GENERATE MAP'
+3. click 'GENERATE MAP' and you will be routed to your maps
 
-4. After the map is generated hover over each datapoint (IP) to find the OS, request type and full request that originated from that IP.
+4. For more information about users OS, IP, request type etc, hover over datapoints on the SVG map
 
-5. To view multiple maps use the 'access.log' buttons on the right side of the map
-
-
-## AWS cluster deploy from https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-cli-tutorial-ec2.html
+5. To switch to a different log file / map use the "Log Buttons" on the right side of the Map UI
