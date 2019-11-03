@@ -1,4 +1,6 @@
-LogViz
+
+![logviz logo](logviz-logo.png)
+
 ===================
 
 ## Description
