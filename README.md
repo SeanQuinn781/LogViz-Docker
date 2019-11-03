@@ -45,3 +45,15 @@ docker-compose up
 4. For more information about users OS, IP, request type etc, hover over datapoints on the SVG map
 
 5. To switch to a different log file / map use the "Log Buttons" on the right side of the Map UI
+
+
+## Key Files
+
+Most of the app logic is in the following files:
+
+BackEnd:
+LogViz-Docker/upload_service/app/main.py
+LogViz-Docker/map_service/app/main.py
+
+FrontEnd:
+LogViz-Docker/map_service/app/static/App.js
