@@ -29,6 +29,7 @@ bootstrap = Bootstrap(app)
 # once files are uploaded, requests can be made to /map to generate maps
 @app.route('/map', methods=['GET'])
 def logViz():
+    # TODO: This should probably use http://flask-classful.teracy.org/
     class LogViz(object):
         # Class for analysing logs and generating interactive map
         def __init__(
