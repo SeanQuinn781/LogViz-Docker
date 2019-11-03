@@ -1,8 +1,6 @@
 
 ![logviz logo](logviz-logo.png)
 
-===================
-
 ## Description
 View the geolocation, status code, operating system and full request of IP addresses visiting NGINX using tooltips on an SVG map
 
