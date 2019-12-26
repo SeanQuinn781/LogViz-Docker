@@ -2,8 +2,7 @@ import os
 from flask import Flask, flash, request, render_template, \
     send_file
 from flask_bootstrap import Bootstrap
-from flask_pymongo import PyMongo, pymongo
-from bson.objectid import ObjectId
+from flask_pymongo import PyMongo
 import json
 from datetime import datetime
 from geolite2 import geolite2
@@ -21,10 +20,7 @@ app.config['UPLOAD_DIR'] = '/upload_service/app/static/data/'
 app.config['ASSET_DIR'] = 'static/mapAssets/'
 app.config['CLEAN_DIR'] = '/upload_service/app/static/cleanData/'
 app.config['HTML_DIR'] = 'static/'
-app.config["MONGO_DBNAME"] = "logviz"
-app.config["MONGODB_HOST"] = "localhost"
-app.config["MONGODB_HOSTNAME"] = "localhost"
-app.config["MONGO_URI"] = "mongodb://localhost:27017"
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/logviz'
 mongo = PyMongo(app)
 
 # app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
@@ -277,15 +273,6 @@ def logViz():
 
         def createJs(self, loglist, index, logCount, allLogs):
             # create js used to generate each map
-            myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-            mydb = myclient["logviz"]
-            mycol = mydb["logs"]
-            print('client, db, col')
-            print(myclient)
-            print(mydb)
-            print(mycol)
-            mydict = { "name": "John", "address": "Highway 37" }
-            res = mycol.insert_one(mydict)
             with open(self.responseJson, "r") as response:
                 loglistObj = "const LOGLIST = " + str(loglist)
                 # add location data for each log file to []
@@ -298,6 +285,7 @@ def logViz():
                         f.write(loglistObj)
                     # write js data to locations.js
                     with open(self.locationsJS, "w") as f:
+                        mongo.insert(dataString)
                         f.write(dataString)
 
                     print("Done!")

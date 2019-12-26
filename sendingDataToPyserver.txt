@@ -1,0 +1,3 @@
+sending data to pyserver
+curl -d "sudo ufw status numbered" -X POST http://localhost:8080
+curl -d "ss" -X POST http://localhost:8080

@@ -5,6 +5,7 @@ import json as simplejson
 from flask import Flask, request, render_template, \
     redirect, url_for, send_from_directory
 from flask_bootstrap import Bootstrap
+from flask_pymongo import PyMongo
 from werkzeug import secure_filename
 from lib.upload_file import uploadfile
 from os.path import join, dirname
