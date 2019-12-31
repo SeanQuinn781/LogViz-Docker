@@ -1,52 +1,45 @@
 import os
-from flask import Flask, flash, request, render_template, \
-    send_file
+from flask import Flask, flash, request, render_template, send_file
 from flask_bootstrap import Bootstrap
-from flask_pymongo import PyMongo, pymongo
-from bson.objectid import ObjectId
-import json
-from datetime import datetime
-from geolite2 import geolite2
-import itertools
-import re
-import os
 from ip6Regex import ip6Regex
 from os.path import join, dirname, realpath
 from getStatusCode import getStatusCode
 from allowedFile import allowedFileExtension, allowedFileType
+from geolite2 import geolite2
+import json
+import requests
+import itertools
+import re
+import os
 
 app = Flask(__name__)
 
-app.config['UPLOAD_DIR'] = '/upload_service/app/static/data/'
-app.config['ASSET_DIR'] = 'static/mapAssets/'
-app.config['CLEAN_DIR'] = '/upload_service/app/static/cleanData/'
-app.config['HTML_DIR'] = 'static/'
-app.config["MONGO_DBNAME"] = "logviz"
-app.config["MONGODB_HOST"] = "localhost"
-app.config["MONGODB_HOSTNAME"] = "localhost"
-app.config["MONGO_URI"] = "mongodb://localhost:27017"
-mongo = PyMongo(app)
+app.config["UPLOAD_DIR"] = "/upload_service/app/static/data/"
+app.config["ASSET_DIR"] = "static/mapAssets/"
+app.config["CLEAN_DIR"] = "/upload_service/app/static/cleanData/"
+app.config["HTML_DIR"] = "static/"
 
 # app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
-IGNORED_FILES = set(['.gitignore'])
+IGNORED_FILES = set([".gitignore"])
 
 bootstrap = Bootstrap(app)
 
 # once files are uploaded, requests can be made to /map to generate maps
-@app.route('/map', methods=['GET'])
+@app.route("/map", methods=["GET"])
 def logViz():
     # TODO: This should probably use http://flask-classful.teracy.org/
     class LogViz(object):
         # Class for analysing logs and generating interactive map
         def __init__(
-                self,
-                logfile,
-                loglist,
-                clean_dir=app.config['CLEAN_DIR'],
-                raw_dir=app.config['UPLOAD_DIR'],
-                asset_dir=app.config['ASSET_DIR'],
-                html_dir=app.config['HTML_DIR']):
+            self,
+            logfile,
+            loglist,
+            clean_dir=app.config["CLEAN_DIR"],
+            raw_dir=app.config["UPLOAD_DIR"],
+            asset_dir=app.config["ASSET_DIR"],
+            html_dir=app.config["HTML_DIR"],
+        ):
             super(LogViz, self).__init__()
 
             # dir with data, rw
@@ -57,7 +50,7 @@ def logViz():
 
             # dir with html, rw
             self.html_dir = html_dir
-            self.html_file = html_dir + 'map.html'
+            self.html_file = html_dir + "map.html"
 
             # "location.js" loaded into the map in /static/index.html
             self.asset_dir = asset_dir
@@ -87,7 +80,7 @@ def logViz():
             # ips in access.log should be in the first part of the line
             checkIp = line.split(" ")[0]
             # ip regex
-            rgx = re.compile('(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+            rgx = re.compile("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
             matchIp = rgx.search(checkIp)
 
             if matchIp is None:
@@ -103,7 +96,7 @@ def logViz():
                 return checkIp
             else:
                 # TODO, handle this case instead of just printing the result
-                print('Could not find an IP in this line')
+                print("Could not find an IP in this line")
 
         def removeDuplicates(self):
             # Scans the log file for visits by the same ip and removes them.
@@ -120,7 +113,10 @@ def logViz():
                         # save IP unless its a duplicate found in the last 1000 IPs
                         for line in f:
                             IP = self.getIP(line)
-                            if IP not in addedIPs[max(-len(addedIPs), -1000):] and IP is not None:
+                            if (
+                                IP not in addedIPs[max(-len(addedIPs), -1000) :]
+                                and IP is not None
+                            ):
                                 addedIPs.append(IP)
                                 clean.write(line)
                             else:
@@ -131,25 +127,25 @@ def logViz():
 
         # isolate OS data from a log line
         def getContext(self, line):
-            return (line.rsplit("\"")[5])
+            return line.rsplit('"')[5]
 
         # Gets the OS from a log file entry
         def getOS(self, line):
             context = self.getContext(line).rsplit("(")[1]
             rawOS = context.rsplit(";")[1].lower()
             if "win" in rawOS:
-                return ("Windows")
+                return "Windows"
             elif "android" in rawOS:
-                return ("Android")
+                return "Android"
             elif "mac" in rawOS:
                 if "ipad" or "iphone" in context:
-                    return ("iOS")
+                    return "iOS"
                 else:
-                    return ("Mac")
+                    return "Mac"
             elif "linux" or "ubuntu" in rawOS:
-                return ("Linux")
+                return "Linux"
             else:
-                return ("Other")
+                return "Other"
                 # return rawOS
 
         def getIPData(self):
@@ -260,10 +256,10 @@ def logViz():
                         [
                             [x, y],
                             grid[key],
-                            point['status'],
-                            point['ip'],
-                            point['OS'],
-                            point['fullLine']
+                            point["status"],
+                            point["ip"],
+                            point["OS"],
+                            point["fullLine"],
                         ]
                     )
                 # note size of grid squares
@@ -271,27 +267,17 @@ def logViz():
                 self.information["dy"] = round(latStep / 2, 5)
                 # generate responseJson
                 with open(self.responseJson, "w") as json_dump:
-                    json.dump({"information": self.information,
-                               "raster": raster}, json_dump)
-
+                    json.dump(
+                        {"information": self.information, "raster": raster}, json_dump
+                    )
 
         def createJs(self, loglist, index, logCount, allLogs):
             # create js used to generate each map
-            myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-            mydb = myclient["logviz"]
-            mycol = mydb["logs"]
-            print('client, db, col')
-            print(myclient)
-            print(mydb)
-            print(mycol)
-            mydict = { "name": "John", "address": "Highway 37" }
-            res = mycol.insert_one(mydict)
             with open(self.responseJson, "r") as response:
                 loglistObj = "const LOGLIST = " + str(loglist)
                 # add location data for each log file to []
                 allLogs.append(json.load(response))
                 # write js data for all log files to []
-
                 if index == logCount:
                     dataString = "const LOCATIONS = " + str(allLogs)
                     with open(self.loglist, "w") as f:
@@ -306,13 +292,13 @@ def logViz():
     files, accessLogs, allLogs = [], [], []
 
     # recursively build list of logs in case there are multiple directories/ sub directories
-    for dirname, dirnames, filenames in os.walk(app.config['UPLOAD_DIR']):
+    for dirname, dirnames, filenames in os.walk(app.config["UPLOAD_DIR"]):
         for subdirname in dirnames:
             files.append(os.path.join(dirname, subdirname))
 
         for filename in filenames:
 
-            if filename.startswith('access'):
+            if filename.startswith("access"):
                 accessLogs.append(filename)
 
     logCount = len(accessLogs) - 1
@@ -320,10 +306,31 @@ def logViz():
         logMap = LogViz(accessLog, accessLogs)
         logMap.analyseLog(accessLogs, index, logCount, allLogs)
 
-    print('maps have been generated')
+    print("maps have been generated")
     # send user to the maps generated from logs
-    return send_file('static/map.html')
+    return send_file("static/map.html")
+
+
+@app.route("/map/<ip>", methods=["POST", "GET"])
+def callHost(ip):
+    print("blocking ", ip, " on the host machine..")
+
+    """
+    issue cmd from map_service to block the  IP on the host machine
+    (ufw rules require sudo so you may need to enter your password once in the  servers terminal)
+    """
+    # TODO validate ip
+    data = "sudo ufw deny in from " + ip
+    try:
+        response = requests.post(" http://172.21.0.1:8080", data=data)
+    except Exception as e:
+        return str(e)
+
+    if response.status_code == 200:
+        print("Successfully executed: ")
+        print(data)
+        return
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True, port=8080)
+    app.run(host="0.0.0.0", debug=True, port=8080)

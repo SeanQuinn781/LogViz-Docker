@@ -30,14 +30,23 @@ https://github.com/blueimp/jQuery-File-Upload
 ## Install/Run
 
 ```
-docker-compose up
+1. Create the docker network:
+
+docker network create logviz
+
+2. Build and run the containers:
+
+docker-compose up --build
+
+3. Start the python server:
+python3 ufwHost.py
 ```
 
 ## Usage
 
 1. Upload Log Files: Use the testing logs found in the test-logs directory, or Download Nginx access Log Files from your web server and unzip the files.
 
-2. Upload multiple nginx log files to uploader at http://127.0.0.1:5000
+2. Upload multiple nginx log files to uploader at http://127.0.0.1:3000
 
 3. click 'GENERATE MAP' and you will be routed to your maps
 
@@ -45,14 +54,18 @@ docker-compose up
 
 5. To switch to a different log file / map use the "Log Buttons" on the right side of the Map UI
 
+## Blocking IPs from the map service on your host machine
 
-## Key Files
+1. Start the docker containers and the python web server:
+docker-compose up --build
+python3 ufwHost.py
 
-Most of the app logic is in the following files:
+2. Allow incoming connections from the map_service  to the host:
+sudo ufw allow in from 172.21.0.0/16
 
-BackEnd:
-LogViz-Docker/upload_service/app/main.py
-LogViz-Docker/map_service/app/main.py
+3. Go to http://127.0.0.1:3000, upload your log files. Click generate map, hover over the request tooltip and click 'UFW block ip'
 
-FrontEnd:
-LogViz-Docker/map_service/app/static/App.js
+4. You will need to run sudo once in the web server terminal to execute the ufw rule
+
+If you don't need ufw blocks you can remove 'external' from the logviz network, and run the containers without the python server
+

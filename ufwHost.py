@@ -1,8 +1,7 @@
 """
-This is a simple python server that will run commands sent from the mapService on the host machine
-This server can be used to issue ufw blocks in real time
-it works by binding the port 8080 between the host and the container, allowing HTTP requests to localhost:8080
-to ask the python server running shell scripts with popen, run a curl or writing code to make a HTTP request curl -d '{"foo":"bar"}' localhost:8080
+Simple python server that will execute commands sent from the mapService on the host.
+Binds to port 8080 allowing HTTP requests to 0.0.0.0:8080 to a to run shell scripts with popen,
+ run a curl or writing code to make a HTTP request 'sudo ufw deny in from' + ip
 """
 import time
 import json
@@ -11,7 +10,8 @@ import requests
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-HOST_NAME = 'localhost'
+# HOST_NAME = 'localhost'
+HOST_NAME = '0.0.0.0'
 PORT_NUMBER = 8080
 
 class MyHandler(BaseHTTPRequestHandler):
@@ -20,29 +20,20 @@ class MyHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-    def do_GET(self):
-        paths = {
-            '/foo': {'status': 200},
-            '/bar': {'status': 302},
-            '/baz': {'status': 404},
-            '/qux': {'status': 500}
-        }
-
     def do_POST(self):
                     length = int(self.headers.get('content-length'))
                     field_data = self.rfile.read(length)
                     print(field_data)
                     self.send_response(200)
                     self.end_headers()
-                    data = field_data
-                    print(data)
-                    cmd = data
+                    # TODO validate
+                    cmd = field_data
+                    print(cmd)
                     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
                     p_status = p.wait()
                     (output, err) = p.communicate()
                     print(output)
                     print("Command exit status/return code : ", p_status)
-
                     self.wfile.write(cmd)
                     return
 
@@ -56,9 +47,9 @@ class MyHandler(BaseHTTPRequestHandler):
                     self.send_header('Content-type', 'text/html')
                     self.end_headers()
                     content = '''
-                                    <html><head><title>Title goes here.</title></head>
-                                    <body><p>This is a test.</p>
-                                    <p>You accessed path: {}</p>
+                                    <html><head>
+                                    <body>
+                                        <p>foo</p>
                                     </body></html>
                                     '''.format(path)
                     return bytes(content, 'UTF-8')

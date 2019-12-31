@@ -1,12 +1,12 @@
 import re
 
-ALLOWED_EXTENSIONS = ['log']
-IGNORED_FILES = set(['.gitignore'])
-ALLOWED_MIME_TYPES = ['application/octet-stream', 'text', 'text/x-log']
+ALLOWED_EXTENSIONS = ["log"]
+IGNORED_FILES = set([".gitignore"])
+ALLOWED_MIME_TYPES = ["application/octet-stream", "text", "text/x-log"]
 
 
 def last_2chars(x):
-    return (x[-2:])
+    return x[-2:]
 
 
 def allowedFileType(mime_type):
@@ -16,5 +16,4 @@ def allowedFileType(mime_type):
 
 
 def allowedFileExtension(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
