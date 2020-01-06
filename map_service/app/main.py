@@ -322,14 +322,12 @@ def callHost(ip):
     # TODO validate ip
     data = "sudo ufw deny in from " + ip
     try:
-        response = requests.post(" http://172.21.0.1:8080", data=data)
+        response = requests.post(" http://172.18.0.1:8080", data=data)
     except Exception as e:
         return str(e)
 
     if response.status_code == 200:
-        print("Successfully executed: ")
-        print(data)
-        return
+        return response.content
 
 
 if __name__ == "__main__":
