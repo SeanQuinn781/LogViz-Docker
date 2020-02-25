@@ -1,0 +1,12 @@
+__pycache__/
+venv/
+Bin
+LogViz
+.idea*
+access*
+static/cleanData/ip.txt
+static/cleanData/noDuplicatesLog.txt
+static/mapAssets/loglist.js
+ip.txt
+noDuplicatesLog.txt
+loglist.js

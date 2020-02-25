@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+
+  upload_service:
+    build: ./upload_service
+    volumes:
+      - './upload_service/app:/upload_service/app'
+    ports:
+      - 3000:80
+    networks:
+      - logviz
+
+  map_service:
+    build: ./map_service
+    volumes:
+      - './upload_service/app:/upload_service/app'
+    ports:
+      - 5000:80
+      # port used to communicate with python server
+      - 8000:8080
+    networks:
+      - logviz
+
+networks:
+  logviz:
+    external: true
