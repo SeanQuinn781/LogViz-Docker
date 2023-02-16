@@ -20,4 +20,4 @@ python-geoip==1.2
 simplejson==3.17.0
 uWSGI==2.0.18
 virtualenv==20.0.5
-Werkzeug==1.0.0
+Werkzeug==2.2.3
